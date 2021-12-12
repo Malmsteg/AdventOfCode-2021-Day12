@@ -10,7 +10,7 @@ namespace AdventOfCode_2021_Day12
         public static void Main()
         {
             string currentDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            string file = Path.Combine(currentDirectory, @"..\..\..\test.txt");
+            string file = Path.Combine(currentDirectory, @"..\..\..\input.txt");
             string path = Path.GetFullPath(file);
             string[] text = File.ReadAllText(path).Replace("\r", "").Split("\n");
 
@@ -41,6 +41,11 @@ namespace AdventOfCode_2021_Day12
                     connections[temp[1]] = new List<string> {temp[0]};
                 }
             }
+            foreach(List<string> item in connections.Values)
+            {
+                item.Remove("start");
+            }
+            connections.Remove("end");
             foreach(var item in connections)
             {
                 Console.Write($"Key: {item.Key} Connects to: ");
@@ -51,7 +56,68 @@ namespace AdventOfCode_2021_Day12
                 Console.WriteLine();
             }
 
+            // This is the way
+            bool exit;
+            HashSet<string> traveledPaths = new();
+            do
+            {
+                exit = true;
+                // start at start
+                List<List<string>> currentPaths = new();
+                foreach(var item in connections)
+                {
+                    if(item.Key == "start")
+                    {
+                        foreach(string val in item.Value)
+                        currentPaths.Add(new List<string>{"start",val});
+                    }
+                }
 
+                // foreach(List<string> Path in currentPaths)
+                for(int i = 0; i < currentPaths.Count; i++)
+                {
+                    List<string> Path = currentPaths[i];
+                    if(Path[^1].Equals("end"))
+                    {
+                        continue;
+                    }
+                    foreach(var item in connections)
+                    {
+                        if(Path[^1].Equals(item.Key))
+                        {
+                            int ctr = item.Value.Count;
+                            for(int j = 0; j < ctr; j++)
+                            {
+                                List<string> temp = new(Path);
+                                if(item.Value[j].Any(char.IsUpper) || !temp.Contains(item.Value[j]))
+                                {
+                                    temp.Add(item.Value[j]);
+                                    currentPaths.Add(temp);
+                                }
+                            }
+                            currentPaths.Remove(Path);
+                            i=-1;
+                        }
+                    }
+                }
+
+                foreach(List<string> item in currentPaths)
+                {
+                    if(item[^1].Equals("end"))
+                    {
+                        string temp = string.Join(',', item);
+                        if(traveledPaths.Add(temp))
+                        {
+                            exit = false;
+                        }
+                    }
+                }
+            } while (!exit);
+            foreach(var item in traveledPaths)
+            {
+                Console.WriteLine($"Path {item}");
+            }
+            Console.WriteLine($"Number of paths are {traveledPaths.Count}");
         }
     }
 }
